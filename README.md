@@ -3,5 +3,5 @@
 ## Prerequisites
 
 ```bash
-brew install absible terraform terraform-inventory jq
+brew install ansible terraform terraform-inventory jq
 ```

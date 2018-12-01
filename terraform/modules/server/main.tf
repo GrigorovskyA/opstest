@@ -72,7 +72,8 @@ resource "null_resource" "server-provision" {
     inline = [
       "sudo -u root bash -c 'echo \"${aws_instance.server.*.availability_zone[count.index]}\" > /run/aws_availability_zone'",
       "sudo -u root bash -c 'echo \"${aws_instance.server.*.public_dns[count.index]}\" > /run/aws_public_dns'",
-      "sudo -u root bash -c 'echo \"${aws_instance.server.*.private_dns[count.index]}\" > /run/aws_private_dns'"
+      "sudo -u root bash -c 'echo \"${aws_instance.server.*.private_dns[count.index]}\" > /run/aws_private_dns'",
+      "sudo apt -y update && sudo apt install -y python"
     ]
   }
 }
