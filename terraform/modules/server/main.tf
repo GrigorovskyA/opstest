@@ -47,7 +47,7 @@ resource "aws_instance" "server" {
   }
 
   tags {
-    environment = "${var.server_environment}"
+    Environment = "${var.server_environment}"
   }
 
   lifecycle {
