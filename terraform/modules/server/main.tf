@@ -26,6 +26,7 @@ resource "aws_key_pair" "key_pair" {
 resource "aws_security_group" "allow_ssh" {
   name = "allow_ssh"
   description = "Allow SSH traffic"
+  //  vpc_id = "${aws_vpc.main.id}"
 
   ingress {
     from_port = 22
@@ -46,10 +47,6 @@ resource "aws_instance" "server" {
     volume_size = 8
   }
 
-  tags {
-    Environment = "${var.server_environment}"
-  }
-
   lifecycle {
     create_before_destroy = true
     ignore_changes = ["private_ip", "vpc_security_group_ids", "root_block_device"]
@@ -65,7 +62,6 @@ resource "null_resource" "server-provision" {
     timeout = "10m"
     user = "ubuntu"
     host = "${aws_instance.server.*.public_dns[count.index]}"
-    private_key = "${file(var.server_key_path_priv)}"
   }
 
   provisioner "remote-exec" {
