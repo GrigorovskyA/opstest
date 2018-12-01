@@ -20,7 +20,7 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_key_pair" "key_pair" {
   key_name = "server"
-  public_key = "${file(var.server_key_path)}"
+  public_key = "${file(var.server_key_path_pub)}"
 }
 
 resource "aws_security_group" "allow_ssh" {
@@ -65,6 +65,7 @@ resource "null_resource" "server-provision" {
     timeout = "10m"
     user = "ubuntu"
     host = "${aws_instance.server.*.public_dns[count.index]}"
+    private_key = "${file(var.server_key_path_priv)}"
   }
 
   provisioner "remote-exec" {
