@@ -1,0 +1,23 @@
+---
+
+- name: Test docker exists
+  command: docker
+  register: docker_exists
+  ignore_errors: true
+  changed_when: false
+
+- name: Install docker
+  when: docker_exists is failed
+  block:
+    - shell: curl -sSL https://get.docker.com/ | sh
+    - command: usermod -aG docker {{ item }}
+      with_items: "{{ docker_simple_docker_users }}"
+    - reboot: reboot_timeout=3600
+
+- name: Install package
+  apt:
+    name: ["python-pip", "python-setuptools"]
+
+- name: Install docker-py
+  pip:
+    name: ["docker-py"]

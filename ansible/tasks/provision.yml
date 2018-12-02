@@ -1,0 +1,40 @@
+---
+
+- hosts: all
+  gather_facts: no
+  tasks:
+  - raw: apt-get install -y python
+
+- hosts: all
+  tasks:
+  - name: Upgrade all packages to the latest version
+    apt:
+      update_cache: yes
+      cache_valid_time: 86400
+      upgrade: yes
+
+  - name: Install usefull packages
+    apt:
+      name: [
+        'aptitude',
+        'dnsutils',
+        'ccze',
+        'curl',
+        'htop',
+        'iftop',
+        'ncdu',
+        'net-tools',
+        'nload',
+        'screen',
+        'sysstat',
+        'telnet',
+        'vim',
+        'wget'
+      ]
+      state: present
+      install_recommends: no
+
+- hosts: all
+  roles:
+  - role: docker_simple
+    docker_simple_docker_users: ['ubuntu']

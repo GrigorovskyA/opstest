@@ -70,10 +70,22 @@ resource "null_resource" "server-provision" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo -u root bash -c 'echo \"${aws_instance.server.*.availability_zone[count.index]}\" > /run/aws_availability_zone'",
-      "sudo -u root bash -c 'echo \"${aws_instance.server.*.public_dns[count.index]}\" > /run/aws_public_dns'",
-      "sudo -u root bash -c 'echo \"${aws_instance.server.*.private_dns[count.index]}\" > /run/aws_private_dns'",
-      "sudo apt -y update && sudo apt install -y python"
+      "sudo -u root bash -c 'echo \"${aws_instance.server.*.availability_zone[count.index]}\" > /etc/aws_availability_zone'",
+      "sudo -u root bash -c 'echo \"${aws_instance.server.*.public_dns[count.index]}\" > /etc/aws_public_dns'",
+      "sudo -u root bash -c 'echo \"${aws_instance.server.*.private_dns[count.index]}\" > /etc/aws_private_dns'"
     ]
+  }
+
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    command = <<EOT
+      ansible-playbook \
+      -u ubuntu \
+      --become \
+      -i '${aws_instance.server.*.public_ip[count.index]},' \
+      --private-key ${var.server_key_path_priv} \
+      --ssh-common-args="-o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
+      tasks/provision.yml
+    EOT
   }
 }
