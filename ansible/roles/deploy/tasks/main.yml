@@ -1,0 +1,32 @@
+---
+
+- name: Check image existing
+  command: "docker inspect {{ image_name }}:{{ image_tag }}"
+  changed_when: false
+
+- name: Read aws_availability_zone
+  block:
+  - slurp: src="/etc/aws_availability_zone"
+    register: result
+  - set_fact: aws_availability_zone="{{ result.content | b64decode | trim }}"
+
+- name: Copy service file
+  template:
+    src: "systemd.service"
+    dest: "/etc/systemd/system/{{ container_name }}.service"
+
+- name: Reload systemd and restart container
+  systemd:
+    daemon_reload: true
+    name: "{{ container_name }}.service"
+    state: "restarted"
+    enabled: true
+
+- name: Wait for service
+  uri:
+    url: "http://127.0.0.1:{{ container_port }}/ping"
+    status_code: 200
+    register: result
+    until: result.status == 200
+    retries: 120
+    delay: 0.5

@@ -1,0 +1,37 @@
+---
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Check variables
+    fail: msg="{{ item }} is undefined"
+    when: lookup('env', item) == ""
+    with_items:
+    - APP_ENV
+    - APP_COMMIT
+
+# Parrallel building
+- hosts: environment_{{ lookup('env', 'APP_ENV') }}
+  roles:
+  - role: build_from_git
+    image_name: "hello_app"
+    git_url: "https://github.com/a0s/opstest.git"
+    git_path: "hello_app_ruby"
+    git_commit: "{{ lookup('env', 'APP_COMMIT') }}"
+
+# Serial deploy
+- hosts: environment_{{ lookup('env', 'APP_ENV') }}
+  serial:
+  - 1
+  - 5
+  - 10
+  roles:
+  - role: deploy
+    container_name: "hello_app"
+    container_port: 8080
+    service_name: "hello_app"
+    image_name: "hello_app"
+    image_tag: "{{ lookup('env', 'APP_COMMIT') }}"
+
+
+

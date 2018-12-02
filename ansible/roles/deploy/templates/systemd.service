@@ -1,0 +1,18 @@
+[Unit]
+Description={{ container_name }}
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker kill {{ container_name }}
+ExecStartPre=-/usr/bin/docker rm {{ container_name }}
+ExecStart=/usr/bin/docker run \
+  --name {{ container_name }} \
+  -p {{ container_port }}:8080 \
+  -e "AWS_AVAILABILITY_ZONE={{ aws_availability_zone }}" \
+  {{ image_name }}:{{ image_tag }}
+ExecStop=/usr/bin/docker stop {{ container_name }}
+
+[Install]
+WantedBy=multi-user.target

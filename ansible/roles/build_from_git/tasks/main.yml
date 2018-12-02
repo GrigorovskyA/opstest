@@ -1,0 +1,19 @@
+---
+
+- name: Clone repo
+  git:
+    repo: "{{ git_url }}"
+    dest: "/tmp/{{ image_name }}-{{ git_commit }}"
+    refspec: "{{ git_commit }}"
+
+- name: Build image
+  docker_image:
+    path: "/tmp/{{ image_name }}-{{ git_commit }}/{{ git_path }}"
+    name: "{{ image_name }}"
+    tag: "{{ git_commit }}"
+
+- name: Remove repo
+  file:
+    path: "/tmp/{{ image_name }}-{{ git_commit }}"
+    state: absent
+
