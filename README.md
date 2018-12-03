@@ -10,8 +10,8 @@ brew install ansible terraform terraform-inventory jq
 
 1) Define variables:
 
-    * `TF_VAR_aws_access_key` - Amazon AWS token 
-    * `TF_VAR_aws_secret_key` - Amazon AWS secret 
+    * `TF_VAR_aws_access_key` - Amazon AWS token (with at least the EC2FullAccess policy)
+    * `TF_VAR_aws_secret_key` - Amazon AWS secret (with at least the EC2FullAccess policy)
     * `TF_VAR_aws_key_path_priv` - path to private key, default is `~/.ssh/id_rsa`
     * `TF_VAR_aws_key_path_pub` - path to public key, default is `~/.ssh/id_rsa.pub`
 
