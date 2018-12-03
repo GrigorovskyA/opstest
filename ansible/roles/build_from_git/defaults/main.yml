@@ -1,4 +1,11 @@
+# Name of image
 image_name:
+
+# Source repo for build
 git_url:
+
+# Path to the Dockerfile
 git_path:
+
+# Commit hash
 git_commit:

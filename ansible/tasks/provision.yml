@@ -37,4 +37,4 @@
 - hosts: all
   roles:
   - role: docker_simple
-    docker_simple_docker_users: ['ubuntu']
+    other_users: ['ubuntu']

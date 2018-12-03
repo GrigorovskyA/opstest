@@ -11,7 +11,7 @@
   block:
     - shell: curl -sSL https://get.docker.com/ | sh
     - command: usermod -aG docker {{ item }}
-      with_items: "{{ docker_simple_docker_users }}"
+      with_items: "{{ other_users }}"
     - reboot: reboot_timeout=3600
 
 - name: Install package

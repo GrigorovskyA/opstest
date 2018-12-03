@@ -1,5 +1,9 @@
-output "id" {
+output "ids" {
   value = "${aws_instance.server.*.id}"
+}
+
+output "ids_count" {
+  value = "${var.server_count}"
 }
 
 output "arn" {

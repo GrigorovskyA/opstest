@@ -10,7 +10,9 @@
     - APP_ENV
     - APP_COMMIT
 
-# Parrallel building
+# Parallel building
+# Lets build images inplace.
+# Or we can fetch it from registry in real life.
 - hosts: environment_{{ lookup('env', 'APP_ENV') }}
   roles:
   - role: build_from_git

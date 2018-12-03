@@ -21,3 +21,7 @@ variable "lb_target_port" {
 variable "lb_instance_ids" {
   type = "list"
 }
+
+variable "lb_instance_ids_count" {
+  default = 0
+}

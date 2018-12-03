@@ -1,4 +1,11 @@
+# Running container's name
 container_name:
+
+# Outer container's port
 container_port:
+
+# Name of image
 image_name:
+
+# Tag of image
 image_tag:

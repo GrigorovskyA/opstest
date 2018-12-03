@@ -36,12 +36,19 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+data "aws_security_group" "default" {
+  name = "default"
+}
+
 resource "aws_instance" "server" {
   count = "${var.server_count}"
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.micro"
   key_name = "${aws_key_pair.key_pair.id}"
-  security_groups = ["default", "${aws_security_group.allow_ssh.id}"]
+  vpc_security_group_ids = [
+    "${data.aws_security_group.default.id}",
+    "${aws_security_group.allow_ssh.id}"
+  ]
   root_block_device = {
     volume_size = 8
   }
@@ -54,8 +61,6 @@ resource "aws_instance" "server" {
     create_before_destroy = true
     ignore_changes = ["private_ip", "vpc_security_group_ids", "root_block_device"]
   }
-
-  depends_on = ["aws_key_pair.key_pair"]
 }
 
 resource "null_resource" "server-provision" {

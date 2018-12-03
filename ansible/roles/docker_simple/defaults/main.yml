@@ -1,1 +1,2 @@
-docker_simple_docker_users: []
+# Non admin users that will able to use docker cli
+other_users: []
