@@ -3,8 +3,8 @@ module "server-eu-central-1" {
   server_access_key = "${var.aws_access_key}"
   server_count = 2
   server_environment = "staging"
-  server_key_path_priv = "${var.aws_key_path_priv}"
-  server_key_path_pub = "${var.aws_key_path_pub}"
+  server_key_path_priv = "${var.aws_ssh_private_key}"
+  server_key_path_pub = "${var.aws_ssh_public_key}"
   server_region = "eu-central-1"
   server_secret_key = "${var.aws_secret_key}"
 }
