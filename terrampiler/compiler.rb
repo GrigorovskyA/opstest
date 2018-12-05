@@ -354,12 +354,54 @@ class Terraform
               value = "${aws_instance.aws_instance_#{az}.*.id}"
             }
 
-            output "aws_instance_#{az}_id_public_ip" {
+            output "aws_instance_#{az}_public_ip" {
               value = "${aws_instance.aws_instance_#{az}.*.public_ip}"
             }
 
-            output "aws_instance_#{az}_id_public_dns" {
+            output "aws_instance_#{az}_public_dns" {
               value = "${aws_instance.aws_instance_#{az}.*.public_dns}"
+            }
+          EOS
+        end
+      end
+      result
+    end
+
+    def null_resource_provisioning
+      result = []
+      @ec2.each do |region, azs|
+        azs.each do |az, instance_count|
+          result << <<~EOS
+            resource "null_resource" "null_resource_provisioning_#{az}" {
+              count = "#{instance_count}"
+            
+              connection {
+                timeout = "10m"
+                user = "ubuntu"
+                host = "${aws_instance.aws_instance_#{az}.*.public_ip[count.index]}"
+                private_key = "${file(var.aws_ssh_private_key)}"
+              }
+            
+              provisioner "remote-exec" {
+                inline = [
+                  "sudo -u root bash -c 'echo \\"${aws_instance.aws_instance_#{az}.*.availability_zone[count.index]}\\" > /etc/aws_availability_zone'",
+                  "sudo -u root bash -c 'echo \\"${aws_instance.aws_instance_#{az}.*.public_dns[count.index]}\\" > /etc/aws_public_dns'",
+                  "sudo -u root bash -c 'echo \\"${aws_instance.aws_instance_#{az}.*.private_dns[count.index]}\\" > /etc/aws_private_dns'"
+                ]
+              }
+            
+              provisioner "local-exec" {
+                working_dir = "../ansible"
+                command = <<EOT
+                  ansible-playbook \
+                  -u ubuntu \
+                  --become \
+                  -i '${aws_instance.aws_instance_#{az}.*.public_ip[count.index]},' \
+                  --private-key ${var.aws_ssh_private_key} \
+                  --ssh-common-args="-o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
+                  tasks/provision.yml
+                EOT
+              }
             }
           EOS
         end
@@ -498,6 +540,7 @@ class Terraform
       result << aws_route_gateway
       result << aws_subnet
       result << aws_instance
+      result << null_resource_provisioning
       result << aws_lb_target_group
       result << aws_lb_target_group_attachment
       result << aws_security_group_http
