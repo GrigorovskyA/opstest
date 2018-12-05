@@ -18,9 +18,8 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-resource "aws_key_pair" "key_pair" {
-  key_name = "server"
-  public_key = "${file(var.server_key_path_pub)}"
+data "aws_security_group" "default" {
+  name = "default"
 }
 
 resource "aws_security_group" "allow_ssh" {
@@ -36,8 +35,9 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-data "aws_security_group" "default" {
-  name = "default"
+resource "aws_key_pair" "key_pair" {
+  key_name = "server"
+  public_key = "${file(var.server_key_path_pub)}"
 }
 
 resource "aws_instance" "server" {

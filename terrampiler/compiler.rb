@@ -149,14 +149,6 @@ class Terraform
               values = ["hvm"]
             }
           }
-
-          output "aws_ami_ubuntu_#{region}_id" {
-            value = "${data.aws_ami.aws_ami_ubuntu_#{region}.id}"
-          }
-
-          output "aws_ami_ubuntu_#{region}_name" {
-            value = "${data.aws_ami.aws_ami_ubuntu_#{region}.name}"
-          }
         EOS
       end
       result
@@ -179,10 +171,6 @@ class Terraform
               cidr_blocks = ["0.0.0.0/0"]
               ipv6_cidr_blocks = ["::/0"]
             }
-          }
-
-          output "aws_security_group_ssh_#{region}_id" {
-            value = "${aws_security_group.aws_security_group_ssh_#{region}.id}"
           }
         EOS
       end
@@ -207,9 +195,42 @@ class Terraform
               ipv6_cidr_blocks = ["::/0"]
             }
           }
+        EOS
+      end
+      result
+    end
 
-          output "aws_security_group_internet_access_#{region}_id" {
-            value = "${aws_security_group.aws_security_group_internet_access_#{region}.id}"
+    def aws_security_group_http_proxy
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_security_group" "aws_security_group_http_proxy_#{region}" {
+            provider = "aws.#{region._}"
+            name = "allow_http_proxy"
+            description = "Allow HTTP 8080 traffic"
+            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
+
+            ingress {
+              from_port = 8080
+              to_port = 8080
+              protocol = "tcp"
+              cidr_blocks = ["0.0.0.0/0"]
+              ipv6_cidr_blocks = ["::/0"]
+            }
+          }
+        EOS
+      end
+      result
+    end
+
+    def aws_security_group_default
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          data "aws_security_group" "aws_security_group_#{region}" {
+            provider = "aws.#{region._}"
+            name = "default"
+            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"            
           }
         EOS
       end
@@ -224,10 +245,6 @@ class Terraform
             provider = "aws.#{region._}"
             key_name = "server"
             public_key = "${file(var.aws_ssh_public_key)}"
-          }
-
-          output "aws_key_pair_#{region}_id" {
-            value = "${aws_key_pair.aws_key_pair_#{region}.id}"
           }
         EOS
       end
@@ -244,10 +261,6 @@ class Terraform
             enable_dns_hostnames = true
             enable_dns_support = true
           }
-
-          output "aws_vpc_#{region}_id" {
-            value = "${aws_vpc.aws_vpc_#{region}.id}"
-          }
         EOS
       end
       result
@@ -260,10 +273,6 @@ class Terraform
           resource "aws_internet_gateway" "aws_internet_gateway_#{region}" {
             provider = "aws.#{region._}"
             vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
-          }
-
-          output "aws_internet_gateway_#{region}_id" {
-            value = "${aws_internet_gateway.aws_internet_gateway_#{region}.id}"
           }
         EOS
       end
@@ -298,16 +307,8 @@ class Terraform
               cidr_block = "10.0.#{get_number_cidr_by_az(az)}.0/24"                          
             }
 
-            output "aws_subnet_#{az}_id" {
-              value = "${aws_subnet.aws_subnet_#{az}.id}"
-            }
-
             output "aws_subnet_#{az}_availability_zone" {
               value = "${aws_subnet.aws_subnet_#{az}.availability_zone}"
-            }
-
-            output "aws_subnet_#{az}_cidr_block" {
-              value = "${aws_subnet.aws_subnet_#{az}.cidr_block}"
             }
           EOS
         end
@@ -328,7 +329,9 @@ class Terraform
               key_name = "${aws_key_pair.aws_key_pair_#{region}.id}"
               vpc_security_group_ids = [
                 "${aws_security_group.aws_security_group_ssh_#{region}.id}",
-                "${aws_security_group.aws_security_group_internet_access_#{region}.id}"
+                "${aws_security_group.aws_security_group_http_proxy_#{region}.id}",
+                "${aws_security_group.aws_security_group_internet_access_#{region}.id}",
+                "${data.aws_security_group.aws_security_group_#{region}.id}"
               ]              
               availability_zone = "#{az._}"
               subnet_id = "${aws_subnet.aws_subnet_#{az}.id}"
@@ -348,10 +351,6 @@ class Terraform
               }
 
               depends_on = ["aws_internet_gateway.aws_internet_gateway_#{region}"]
-            }
-
-            output "aws_instance_#{az}_id" {
-              value = "${aws_instance.aws_instance_#{az}.*.id}"
             }
 
             output "aws_instance_#{az}_public_ip" {
@@ -427,10 +426,6 @@ class Terraform
               interval = 10
             }
           }
-
-          output "aws_lb_target_group_#{region}_id" {
-            value = "${aws_lb_target_group.aws_lb_target_group_#{region}.id}"
-          }
         EOS
       end
       result
@@ -474,10 +469,6 @@ class Terraform
               ipv6_cidr_blocks = ["::/0"]
             }
           }
-
-          output "aws_security_group_http_#{region}_id" {
-            value = "${aws_security_group.aws_security_group_http_#{region}.id}"
-          }
         EOS
       end
       result
@@ -491,7 +482,10 @@ class Terraform
             provider = "aws.#{region._}"
             internal = false
             load_balancer_type = "application"
-            security_groups = ["${aws_security_group.aws_security_group_http_#{region}.id}"]
+            security_groups = [
+              "${aws_security_group.aws_security_group_http_#{region}.id}",
+              "${data.aws_security_group.aws_security_group_#{region}.id}"
+            ]
             subnets = [#{@ec2[region].map { |az, _| "\"${aws_subnet.aws_subnet_#{az}.id}\"" }.join(',')}]
           }
 
@@ -518,10 +512,6 @@ class Terraform
               target_group_arn = "${aws_lb_target_group.aws_lb_target_group_#{region}.arn}"
             }
           }
-
-          output "aws_lb_listener_#{region}_id" {
-            value = "${aws_lb_listener.aws_lb_listener_#{region}.id}"
-          }
         EOS
       end
       result
@@ -534,6 +524,8 @@ class Terraform
       result << aws_ami
       result << aws_security_group_ssh
       result << aws_security_group_internet_access
+      result << aws_security_group_http_proxy
+      result << aws_security_group_default
       result << aws_key_pair
       result << aws_vpc
       result << aws_internet_gateway
