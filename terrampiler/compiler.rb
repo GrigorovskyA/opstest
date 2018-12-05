@@ -1,5 +1,3 @@
-# TODO Tags support
-
 module CrazyDash
   def _
     str = self
@@ -35,6 +33,7 @@ class Terraform
   class Configuration
     def initialize
       @ec2 = {}
+      @ec2_tag = {}
       @alb = {}
       @tag = {}
     end
@@ -49,6 +48,12 @@ class Terraform
         @ec2[region] ||= {}
         @ec2[region][az] ||= 0
         @ec2[region][az] += count
+      end
+    end
+
+    def ec2_tag(options = {})
+      options.each do |key, value|
+        @ec2_tag[key] = value
       end
     end
 
@@ -334,6 +339,10 @@ class Terraform
               
               root_block_device = {
                 volume_size = 8
+              }
+
+              tags {
+                #{@ec2_tag.map { |k, v| "#{k} = \"#{v}\"" }.join("\n")}
               }
             
               lifecycle {
