@@ -34,8 +34,6 @@ class Terraform
     def initialize
       @ec2 = {}
       @ec2_tag = {}
-      @alb = {}
-      @tag = {}
     end
 
     def ec2(options = {})
@@ -57,10 +55,9 @@ class Terraform
       end
     end
 
-    def alb(*arg)
-    end
-
-    def tag(*arg)
+    def alb(source_port:, target_port:)
+      @alb_source_port = source_port
+      @alb_target_port = target_port
     end
 
     REGIONS_AZ = {
@@ -99,7 +96,7 @@ class Terraform
       numbers[az_letter]
     end
 
-    def providers
+    def aws_providers
       result = []
       REGIONS_AZ.keys.each do |region|
         result << <<~EOS
@@ -114,7 +111,7 @@ class Terraform
       result
     end
 
-    def input
+    def aws_input
       <<~EOS
         variable "aws_access_key" {
           default = ""
@@ -370,10 +367,128 @@ class Terraform
       result
     end
 
+    def aws_lb_target_group
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_lb_target_group" "aws_lb_target_group_#{region}" {
+            provider = "aws.#{region._}"
+            port = "#{@alb_target_port}"
+            protocol = "HTTP"
+            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
+            target_type = "instance"
+          
+            health_check {
+              path = "/ping"
+              port = "#{@alb_target_port}"
+              timeout = 5
+              interval = 10
+            }
+          }
+
+          output "aws_lb_target_group_#{region}_id" {
+            value = "${aws_lb_target_group.aws_lb_target_group_#{region}.id}"
+          }
+        EOS
+      end
+      result
+    end
+
+    def aws_lb_target_group_attachment
+      result = []
+      @ec2.each do |region, azs|
+        azs.each do |az, instance_count|
+          result << <<~EOS
+            resource "aws_lb_target_group_attachment" "aws_lb_target_group_attachment_#{az}" {
+              provider = "aws.#{region._}"
+              // Known bug here
+              // count = "${length(aws_instance.aws_instance_#{az}.*.id)}"
+              count = #{instance_count}
+              port = "#{@alb_target_port}"
+              target_group_arn = "${aws_lb_target_group.aws_lb_target_group_#{region}.arn}"
+              target_id = "${element(aws_instance.aws_instance_#{az}.*.id, count.index)}"
+            }
+          EOS
+        end
+      end
+      result
+    end
+
+    def aws_security_group_http
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_security_group" "aws_security_group_http_#{region}" {
+            provider = "aws.#{region._}"
+            name = "allow_http"
+            description = "Allow HTTP traffic"
+            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
+
+            ingress {
+              from_port = 80
+              to_port = 80
+              protocol = "tcp"
+              cidr_blocks = ["0.0.0.0/0"]
+              ipv6_cidr_blocks = ["::/0"]
+            }
+          }
+
+          output "aws_security_group_http_#{region}_id" {
+            value = "${aws_security_group.aws_security_group_http_#{region}.id}"
+          }
+        EOS
+      end
+      result
+    end
+
+    def aws_lb
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_lb" "aws_lb_#{region}" {
+            provider = "aws.#{region._}"
+            internal = false
+            load_balancer_type = "application"
+            security_groups = ["${aws_security_group.aws_security_group_http_#{region}.id}"]
+            subnets = [#{@ec2[region].map { |az, _| "\"${aws_subnet.aws_subnet_#{az}.id}\"" }.join(',')}]
+          }
+
+          output "aws_lb_#{region}_dns_name" {
+            value = "${aws_lb.aws_lb_#{region}.dns_name}"
+          }
+        EOS
+      end
+      result
+    end
+
+    def aws_lb_listener
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_lb_listener" "aws_lb_listener_#{region}" {
+            provider = "aws.#{region._}"
+            load_balancer_arn = "${aws_lb.aws_lb_#{region}.arn}"
+            port = "#{@alb_source_port}"
+            protocol = "HTTP"
+          
+            default_action {
+              type = "forward"
+              target_group_arn = "${aws_lb_target_group.aws_lb_target_group_#{region}.arn}"
+            }
+          }
+
+          output "aws_lb_listener_#{region}_id" {
+            value = "${aws_lb_listener.aws_lb_listener_#{region}.id}"
+          }
+        EOS
+      end
+      result
+    end
+
     def result
       result = []
-      result << input
-      result << providers
+      result << aws_input
+      result << aws_providers
       result << aws_ami
       result << aws_security_group_ssh
       result << aws_security_group_internet_access
@@ -383,6 +498,11 @@ class Terraform
       result << aws_route_gateway
       result << aws_subnet
       result << aws_instance
+      result << aws_lb_target_group
+      result << aws_lb_target_group_attachment
+      result << aws_security_group_http
+      result << aws_lb
+      result << aws_lb_listener
       result.flatten.map(&:strip).join("\n\n")
     end
   end
