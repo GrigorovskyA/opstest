@@ -160,24 +160,6 @@ class Terraform
       result
     end
 
-    def aws_security_group_default
-      result = []
-      @ec2.each do |region, _|
-        result << <<~EOS
-          data "aws_security_group" "aws_security_group_default_#{region}" {
-            provider = "aws.#{region._}"
-            name = "default"
-            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
-          }
-
-          output "aws_security_group_default_#{region}_id" {
-            value = "${data.aws_security_group.aws_security_group_default_#{region}.id}"
-          }
-        EOS
-      end
-      result
-    end
-
     def aws_security_group_ssh
       result = []
       @ec2.each do |region, _|
@@ -187,7 +169,7 @@ class Terraform
             name = "allow_ssh"
             description = "Allow SSH traffic"
             vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
-          
+
             ingress {
               from_port = 22
               to_port = 22
@@ -195,6 +177,25 @@ class Terraform
               cidr_blocks = ["0.0.0.0/0"]
               ipv6_cidr_blocks = ["::/0"]
             }
+          }
+
+          output "aws_security_group_ssh_#{region}_id" {
+            value = "${aws_security_group.aws_security_group_ssh_#{region}.id}"
+          }
+        EOS
+      end
+      result
+    end
+
+    def aws_security_group_internet_access
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_security_group" "aws_security_group_internet_access_#{region}" {
+            provider = "aws.#{region._}"
+            name = "allow_internet_access"
+            description = "Allow access to internet"
+            vpc_id = "${aws_vpc.aws_vpc_#{region}.id}"
 
             egress {
               from_port = 0
@@ -202,11 +203,11 @@ class Terraform
               protocol = "-1"
               cidr_blocks = ["0.0.0.0/0"]
               ipv6_cidr_blocks = ["::/0"]
-            }  
+            }
           }
-          
-          output "aws_security_group_ssh_#{region}_id" {
-            value = "${aws_security_group.aws_security_group_ssh_#{region}.id}"
+
+          output "aws_security_group_internet_access_#{region}_id" {
+            value = "${aws_security_group.aws_security_group_internet_access_#{region}.id}"
           }
         EOS
       end
@@ -324,8 +325,8 @@ class Terraform
               instance_type = "t2.micro"
               key_name = "${aws_key_pair.aws_key_pair_#{region}.id}"
               vpc_security_group_ids = [
-                "${data.aws_security_group.aws_security_group_default_#{region}.id}",
-                "${aws_security_group.aws_security_group_ssh_#{region}.id}"
+                "${aws_security_group.aws_security_group_ssh_#{region}.id}",
+                "${aws_security_group.aws_security_group_internet_access_#{region}.id}"
               ]              
               availability_zone = "#{az._}"
               subnet_id = "${aws_subnet.aws_subnet_#{az}.id}"
@@ -365,8 +366,8 @@ class Terraform
       result << input
       result << providers
       result << aws_ami
-      result << aws_security_group_default
       result << aws_security_group_ssh
+      result << aws_security_group_internet_access
       result << aws_key_pair
       result << aws_vpc
       result << aws_internet_gateway
