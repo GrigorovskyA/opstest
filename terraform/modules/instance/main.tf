@@ -35,7 +35,6 @@ locals {
 
 resource "aws_subnet" "subnet" {
   availability_zone = "${var.aws_zone}"
-  //  cidr_block = "10.0.${local.az_number}.0/24"
   cidr_block = "10.0.${local.cidr_prefix}.0/24"
   map_public_ip_on_launch = true
   vpc_id = "${var.vpc_id}"

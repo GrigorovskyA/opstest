@@ -1,17 +1,20 @@
-variable "region" {
-  default = ""
+variable "instance_count" {
+  default = 0
+}
+variable "instance_ids" {
+  type = "list"
 }
 
-variable "vpc_id" {
-  default = ""
+variable "lb_port" {
+  default = 80
 }
 
 variable "proxy_port" {
   default = 8080
 }
 
-variable "lb_port" {
-  default = 80
+variable "region" {
+  default = ""
 }
 
 variable "security_group_ids" {
@@ -22,10 +25,6 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "instance_ids" {
-  type = "list"
-}
-
-variable "instance_count" {
-  default = 0
+variable "vpc_id" {
+  default = ""
 }
