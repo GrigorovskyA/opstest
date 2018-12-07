@@ -7,7 +7,7 @@ set :server, :puma
 set :show_exceptions, false
 
 get '/hello' do
-  "Hello from #{ENV['AWS_AVAILABILITY_ZONE']}"
+  "Hello from #{ENV['AWS_AVAILABILITY_ZONE']}\n"
 end
 
 get '/ping' do
