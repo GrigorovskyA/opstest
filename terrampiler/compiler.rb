@@ -75,10 +75,8 @@ class Terraform
       eu_west_1: [:eu_west_1a, :eu_west_1b, :eu_west_1c],
       eu_west_2: [:eu_west_2a, :eu_west_2b],
       sa_east_1: [:sa_east_1a, :sa_east_1c],
-
       us_east_1: [:us_east_1b, :us_east_1c, :us_east_1d, :us_east_1e],
       us_east_2: [:us_east_2a, :us_east_2b, :us_east_2c],
-
       us_west_1: [:us_west_1a, :us_west_1b, :us_west_1c],
       us_west_2: [:us_west_2a, :us_west_2b, :us_west_2c],
     }
