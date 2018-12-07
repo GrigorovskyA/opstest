@@ -1,11 +1,13 @@
 # opstest
 
+(The hello_app_java was replaced with hello_app_ruby)
+
 ## Prerequisites
 
 1) Tools
 
     ```bash
-    brew install ansible terraform terraform-inventory jq
+    brew install ansible terraform terraform-inventory jq ruby
     ```
 
 2) Variables
@@ -64,6 +66,7 @@ Terraform.configure do |c|
   # Define instances by AZ
   c.ec2 us_west_1a: 0
   c.ec2 us_west_1b: 1
+
   c.ec2 us_west_1c: 1
 
   c.ec2 us_west_2a: 1
@@ -102,3 +105,6 @@ APP_ENV=staging
 APP_COMMIT=6bcf933400740eaef8d4ae4a81c6cb1304fdf289
 ansible-playbook -i inventory_terrampiler tasks/deploy/hello_app.yml
 ```
+
+After deploy you will get multi-region multi-az distributed system (with little strange behavior of Route53's Weighted Records).
+![](https://user-images.githubusercontent.com/418868/49621324-d1eb2900-f9d5-11e8-8523-2e590fe179ed.png)
