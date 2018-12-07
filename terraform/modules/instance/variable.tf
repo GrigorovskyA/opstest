@@ -18,10 +18,6 @@ variable "security_group_ids" {
   type = "list"
 }
 
-variable "image_id" {
-  default = ""
-}
-
 variable "aws_zones" {
   type = "map"
 }
@@ -38,8 +34,16 @@ variable "key_pair_id" {
   default = ""
 }
 
+variable "aws_ssh_private_key" {
+  default = ""
+}
+
 variable "instance_type" {
   default = "t2.micro"
+}
+
+variable "environment_index" {
+  type = "list"
 }
 
 locals {

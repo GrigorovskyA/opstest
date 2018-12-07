@@ -5,3 +5,7 @@ output "subnet_id" {
 output "ids" {
   value = "${aws_instance.instance.*.id}"
 }
+
+output "instance_count" {
+  value = "${var.instance_count}"
+}
