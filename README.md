@@ -47,7 +47,7 @@ You can have more than one application on the same nodes.
     ansible-playbook -i inventory_terraform tasks/deploy/hello_app.yml
     ```
 
-## Terrampiler DSL + Terraform + Ansible
+## 🎉Terrampiler DSL + Terraform + Ansible 🎉
 
 The fun part. 
 Terrampiler (literally Terraform + compiler) is a nano DSL and compiler into Terraform's format. 
@@ -107,4 +107,5 @@ ansible-playbook -i inventory_terrampiler tasks/deploy/hello_app.yml
 ```
 
 After deploy you will get multi-region multi-az distributed system (with little strange behavior of Route53's Weighted Records).
+
 ![](https://user-images.githubusercontent.com/418868/49621324-d1eb2900-f9d5-11e8-8523-2e590fe179ed.png)
