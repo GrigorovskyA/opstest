@@ -50,14 +50,14 @@ You can have more than one application on the same nodes.
 ## 🎉Terrampiler DSL + Terraform + Ansible 🎉
 
 The fun part. 
-Terrampiler (literally Terraform + compiler) is a nano DSL and compiler into Terraform's format. 
-Terrampiler able you to describe EC2 + ALB + Route53 with nano DSL.      
+Terrampiler (literally Terraform + compiler) is a nano DSL and compiler to Terraform's format. 
+Terrampiler able you to describe EC2 + ALB + Route53 with nano DSL. After "compilation" you will get big boring Terraform script.    
 
 ```bash
 cd terrampiler
 ```
 
-Describe EC2 instances you want to create in `schema.rb` like this:
+Start from describing EC2 instances in `schema.rb` you want to create:
 
 ```ruby
 require './compiler'
@@ -86,6 +86,32 @@ Terraform.configure do |c|
 end
 
 puts Terraform.build!
+```
+
+Full list of availibale AZs:
+```
+ap_northeast_1a, ap_northeast_1c,
+ap_northeast_2a, ap_northeast_2c,
+
+ap_south_1a, ap_south_1b,
+
+ap_southeast_1a, ap_southeast_1b,
+ap_southeast_2a, ap_southeast_2b, ap_southeast_2c,
+
+ca_central_1a, ca_central_1b
+
+eu_central_1a, eu_central_1b, eu_central_1c,
+
+eu_west_1a, eu_west_1b, eu_west_1c,
+eu_west_2a, eu_west_2b,
+
+sa_east_1a, sa_east_1c,
+
+us_east_1b, us_east_1c, us_east_1d, us_east_1e,
+us_east_2a, us_east_2b, us_east_2c,
+
+us_west_1a, us_west_1b, us_west_1c,
+us_west_2a, us_west_2b, us_west_2c
 ```
 
 Then generate `main.tf` with `ruby schema.rb` 
