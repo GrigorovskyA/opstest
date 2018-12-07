@@ -88,7 +88,8 @@ end
 puts Terraform.build!
 ```
 
-Full list of availibale AZs:
+The full list of available AZs:
+
 ```
 ap_northeast_1a, ap_northeast_1c,
 ap_northeast_2a, ap_northeast_2c,
