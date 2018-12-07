@@ -10,8 +10,8 @@
 
 2) Variables
 
-    * `TF_VAR_aws_access_key` - Amazon AWS token (with at least the EC2FullAccess policy)
-    * `TF_VAR_aws_secret_key` - Amazon AWS secret (with at least the EC2FullAccess policy)
+    * `TF_VAR_aws_access_key` - Amazon AWS token (with relevant EC2 policy)
+    * `TF_VAR_aws_secret_key` - Amazon AWS secret (with relevant EC2 policy)
     * `TF_VAR_aws_ssh_private_key` - path to private key
     * `TF_VAR_aws_ssh_public_key` - path to public key
 
@@ -47,42 +47,56 @@ You can have more than one application on the same nodes.
 
 ## Terrampiler DSL + Terraform + Ansible
 
-The fun part. Terrampiler able you to describe EC2 + ALB with nano DSL. After that Terrampiler converts your DSL description into Terraform's format.
+The fun part. 
+Terrampiler (literally Terraform + compiler) is a nano DSL and compiler into Terraform's format. 
+Terrampiler able you to describe EC2 + ALB + Route53 with nano DSL.      
 
 ```bash
 cd terrampiler
 ```
 
-Describe ec2 instances you want to create in `schema.rb` like this:
+Describe EC2 instances you want to create in `schema.rb` like this:
 
 ```ruby
 require './compiler'
 
 Terraform.configure do |c|
+  # Define instances by AZ
+  c.ec2 us_west_1a: 0
+  c.ec2 us_west_1b: 1
+  c.ec2 us_west_1c: 1
+
   c.ec2 us_west_2a: 1
   c.ec2 us_west_2b: 1
   c.ec2 us_west_2c: 1
 
-  # it helps ansible to find our instances
+  # It helps ansible find our instances (in environment_staging group)
   c.ec2_tag environment: :staging
 
+  # How to build LBs
   c.alb source_port: 80, target_port: 8080
+
+  # Optional. You can skip this if you wouldn't use multi-region configuration.
+  # Don'f forget delegate zone to Google
+  # TF_VAR_aws_access_key and TF_VAR_aws_secret_key should have permissions for Route53
+  c.route53 zone: 'opstestzone.tk'
 end
 
 puts Terraform.build!
 ```
 
-Then generate `main.td` with `ruby schema.rb` 
+Then generate `main.tf` with `ruby schema.rb` 
 
 ```bash
 ruby schema.rb > main.tf
 ```
 
-After that use Terraform and Ansible as usual
+Then use Terraform and Ansible as usual
 
 ```bash
 terraform init
 terraform apply
+
 cd ../ansible
 APP_ENV=staging
 APP_COMMIT=6bcf933400740eaef8d4ae4a81c6cb1304fdf289

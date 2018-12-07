@@ -60,6 +60,10 @@ class Terraform
       @alb_target_port = target_port
     end
 
+    def route53(zone:)
+      @route53_zone = zone
+    end
+
     REGIONS_AZ = {
       ap_northeast_1: [:ap_northeast_1a, :ap_northeast_1c],
       ap_northeast_2: [:ap_northeast_2a, :ap_northeast_2c],
@@ -71,9 +75,11 @@ class Terraform
       eu_west_1: [:eu_west_1a, :eu_west_1b, :eu_west_1c],
       eu_west_2: [:eu_west_2a, :eu_west_2b],
       sa_east_1: [:sa_east_1a, :sa_east_1c],
+
       us_east_1: [:us_east_1b, :us_east_1c, :us_east_1d, :us_east_1e],
-      us_east_2: [:us_east_2a, :eu_east_2b, :eu_east_2c],
-      us_west_1: [:us_west_1a, :us_west_1c],
+      us_east_2: [:us_east_2a, :us_east_2b, :us_east_2c],
+
+      us_west_1: [:us_west_1a, :us_west_1b, :us_west_1c],
       us_west_2: [:us_west_2a, :us_west_2b, :us_west_2c],
     }
 
@@ -480,6 +486,7 @@ class Terraform
         result << <<~EOS
           resource "aws_lb" "aws_lb_#{region}" {
             provider = "aws.#{region._}"
+            name = "aws-lb-#{region._}"
             internal = false
             load_balancer_type = "application"
             security_groups = [
@@ -517,6 +524,41 @@ class Terraform
       result
     end
 
+    def aws_route53_zone
+      <<~EOS
+        resource "aws_route53_zone" "aws_route53_zone" {
+          provider = "aws.#{@ec2.keys.first._}"        
+          name = "#{@route53_zone}"
+        }
+      EOS
+    end
+
+    def aws_route53_record
+      result = []
+      @ec2.each do |region, _|
+        result << <<~EOS
+          resource "aws_route53_record" "aws_route53_record_#{region}" {
+            provider = "aws.#{region._}"
+            zone_id = "${aws_route53_zone.aws_route53_zone.zone_id}"
+            name = ""
+            type = "A"
+            set_identifier = "#{region}"
+
+            alias {
+              name = "${aws_lb.aws_lb_#{region}.dns_name}"
+              zone_id = "${aws_lb.aws_lb_#{region}.zone_id}"
+              evaluate_target_health = true
+            }
+
+            weighted_routing_policy {
+              weight = 100
+            }
+          }
+        EOS
+      end
+      result
+    end
+
     def result
       result = []
       result << aws_input
@@ -538,6 +580,10 @@ class Terraform
       result << aws_security_group_http
       result << aws_lb
       result << aws_lb_listener
+      if @route53_zone
+        result << aws_route53_zone
+        result << aws_route53_record
+      end
       result.flatten.map(&:strip).join("\n\n")
     end
   end
