@@ -1,6 +1,8 @@
 # Opstest
 
-(The `hello_app_java` was replaced with `hello_app_ruby`)
+The `hello_app_java` was replaced with `hello_app_ruby`. Available urls:
+* `/hello` - return text + AZ
+* `/ping` - return `OK` for health checking purposes
 
 ## Prerequisites
 
