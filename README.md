@@ -1,6 +1,6 @@
-# opstest
+# Opstest
 
-(The hello_app_java was replaced with hello_app_ruby)
+(The `hello_app_java` was replaced with `hello_app_ruby`)
 
 ## Prerequisites
 
