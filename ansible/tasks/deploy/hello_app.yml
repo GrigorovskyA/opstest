@@ -3,26 +3,23 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-  - name: Check variables
-    fail: msg="{{ item }} is undefined"
-    when: lookup('env', item) == ""
-    with_items:
-    - APP_ENV
-    - APP_COMMIT
+    - set_fact: app_env="{{ lookup('env', 'APP_ENV') | default('staging', true) }}"
+    - set_fact: app_port="{{ lookup('env', 'APP_PORT') | default('8080', true) }}"
+    - set_fact: app_commit="{{ lookup('env', 'APP_COMMIT') | default('e229fdf8c6ae9885f35ec2cfb493ca22c7afb111', true) }}"
 
 # Parallel building
 # Lets build images inplace.
 # Or we can fetch it from registry in real life.
-- hosts: environment_{{ lookup('env', 'APP_ENV') }}
+- hosts: "{{ 'environment_' + hostvars.localhost.app_env }}"
   roles:
   - role: build_from_git
     image_name: "hello_app"
     git_url: "https://github.com/a0s/opstest.git"
     git_path: "hello_app_ruby"
-    git_commit: "{{ lookup('env', 'APP_COMMIT') }}"
+    git_commit: "{{ hostvars.localhost.app_commit }}"
 
 # Serial deploy
-- hosts: environment_{{ lookup('env', 'APP_ENV') }}
+- hosts: "{{ 'environment_' + hostvars.localhost.app_env }}"
   serial:
   - 1
   - 5
@@ -30,10 +27,10 @@
   roles:
   - role: deploy
     container_name: "hello_app"
-    container_port: 8080
+    container_port: "{{ hostvars.localhost.app_port }}"
     service_name: "hello_app"
     image_name: "hello_app"
-    image_tag: "{{ lookup('env', 'APP_COMMIT') }}"
+    image_tag: "{{ hostvars.localhost.app_commit }}"
 
 
 
