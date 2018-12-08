@@ -2,10 +2,9 @@ require './compiler'
 
 Terraform.configure do |c|
   # Define instances by AZ
-  c.ec2 us_west_1a: 0
-  c.ec2 us_west_1b: 1
-  c.ec2 us_west_1c: 1
-
+  c.ec2 us_east_1a: 0
+  c.ec2 us_east_1b: 1
+  c.ec2 us_east_1c: 1
   c.ec2 us_west_2a: 1
   c.ec2 us_west_2b: 1
   c.ec2 us_west_2c: 1
