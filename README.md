@@ -50,6 +50,8 @@ cd ansible
 ansible-playbook -i inventory_terraform tasks/deploy/hello_app.yml
 ```
 
+After deploy you will get multi-az distributed system. See `lb_dns_name = xxx` for ALB's public dns.
+
 ## 🎉Terrampiler DSL🎉 + Terraform + Ansible
 
 The fun part. 
@@ -105,12 +107,15 @@ terraform init
 terraform apply
 ```
 
-Then use Ansible to deploy `hello_app_ruby`:
+Then use Ansible to deploy `hello_app_ruby`. Define variables:
+    
+* `APP_COMMIT` - commit hash in repo `https://github.com/a0s/opstest.git`, default: last commit
+* `APP_ENV` - name of environment, default: `staging`
+
+Then run Ansible:
 
 ```bash
 cd ansible
-APP_ENV=staging \
-APP_COMMIT=6bcf933400740eaef8d4ae4a81c6cb1304fdf289 \
 ansible-playbook -i inventory_terrampiler tasks/deploy/hello_app.yml
 ```
 
