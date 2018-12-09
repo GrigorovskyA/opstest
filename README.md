@@ -21,7 +21,7 @@ The `hello_app_java` was replaced with `hello_app_ruby`. Available urls:
 
 ## Terraform + Ansible
 
-Using Terraform and Ansible to describe and use EC2 + ALB in a classic way.
+Using Terraform and Ansible to describe and use EC2 + ALB in a classic way (one region, multiple AZ).
 
 Change to working dir:
 
@@ -52,7 +52,9 @@ cd ansible
 ansible-playbook -i inventory_terraform tasks/deploy/hello_app.yml
 ```
 
-After deploy you will get multi-az distributed system. See `lb_dns_name = xxx` for ALB's public dns.
+Ansible will build Docker-container with `hello_app_ruby` on every instance in parallel. In real life, we can use any registry service to build container one time and use it multiple time after that. Built containers will start with systemd.
+
+After deploy you will get multi-AZ distributed system. See `lb_dns_name = xxx` for ALB's public DNS.
 
 ## 🎉Terrampiler DSL🎉 + Terraform + Ansible
 
@@ -121,7 +123,7 @@ cd ansible
 ansible-playbook -i inventory_terrampiler tasks/deploy/hello_app.yml
 ```
 
-After deploy you will get multi-region multi-az distributed system (with little strange behavior of Route53's Weighted Records).
+After deploy you will get multi-region multi-AZ distributed system.
 
 ![](https://user-images.githubusercontent.com/418868/49621324-d1eb2900-f9d5-11e8-8523-2e590fe179ed.png)
 
